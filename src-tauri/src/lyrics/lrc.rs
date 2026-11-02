@@ -182,4 +182,3 @@ mod tests {
         assert_eq!(lines[0].text, "Valid line");
     }
 }
-

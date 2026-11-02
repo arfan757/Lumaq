@@ -86,4 +86,3 @@ pub trait MediaSource: Send + Sync {
     async fn cycle_repeat(&self) -> Result<(), String>;
     fn set_source_preference(&self, preference: String);
 }
-

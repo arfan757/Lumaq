@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/banner.png" alt="Lumaq banner" width="100%">
+</p>
+
 # Lumaq 🎵🪟
 
 **Lumaq** is a lightweight, zero-login desktop widget for Windows that brings your currently playing music to life in an elegant, translucent liquid-glass card. It displays dynamic album art, time-synced lyrics with fluid two-line transitions, a progress bar with millisecond-smooth interpolation, and full media playback controls.
