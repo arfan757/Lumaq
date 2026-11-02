@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1250 1250" width="1250" height="1250">
+  <title>Lumaq Logo</title>
+  <desc>Official logo for Lumaq: A liquid-glass lyrics widget for your desktop.</desc>
+
+  <defs>
+    <linearGradient id="ringGrad" gradientUnits="userSpaceOnUse" x1="300" y1="1000" x2="980" y2="360">
+      <stop offset="0" stop-color="#7a14ff" />
+      <stop offset="0.3" stop-color="#4a34ff" />
+      <stop offset="0.5" stop-color="#0a64ff" />
+      <stop offset="0.7" stop-color="#05a8f8" />
+      <stop offset="1" stop-color="#00e8d2" />
+    </linearGradient>
+    <linearGradient id="playGrad" gradientUnits="userSpaceOnUse" x1="730" y1="1080" x2="1070" y2="820">
+      <stop offset="0" stop-color="#7a14ff" />
+      <stop offset="0.35" stop-color="#3f4cff" />
+      <stop offset="0.6" stop-color="#0a8aff" />
+      <stop offset="0.8" stop-color="#05c0f2" />
+      <stop offset="1" stop-color="#00e8d2" />
+    </linearGradient>
+  </defs>
+
+  <!-- Open ring (stroked with round joins for soft corners) -->
+  <path d="M664,884 L664,1034 A408,408 0 1 1 1012,758 L878,682 A259,259 0 1 0 664,884 Z" fill="url(#ringGrad)" stroke="url(#ringGrad)" stroke-width="24" stroke-linejoin="round" />
+
+  <!-- Rounded play triangle -->
+  <polygon points="1029,893 759,737 759,1049" fill="url(#playGrad)" stroke="url(#playGrad)" stroke-width="112" stroke-linejoin="round" />
+</svg>
