@@ -80,3 +80,4 @@ describe("getLyricDisplay", () => {
     expect(res.nextText).toBe("");
   });
 });
+

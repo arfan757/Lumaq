@@ -119,3 +119,4 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
 
   return null;
 };
+

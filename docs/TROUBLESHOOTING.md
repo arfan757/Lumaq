@@ -50,3 +50,4 @@ Common issues and their solutions.
 - **Solution:**
   1. In the Lumaq Settings drawer, ensure **"Enable Real Blur"** is disabled if your GPU does not handle translucent acrylic blur smoothly.
   2. Check **Windows Settings > Accessibility > Visual Effects** and verify **Animation effects** and **Transparency effects** are turned on.
+

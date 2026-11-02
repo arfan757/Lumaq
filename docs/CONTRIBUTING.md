@@ -48,3 +48,4 @@ When reporting issues, please provide:
 1. Windows version (e.g. Windows 11 23H2).
 2. Media player & version (e.g. Spotify Desktop 1.2.x).
 3. Log output from `C:\Users\<username>\AppData\Local\com.lumaq.desktop\logs` if applicable.
+

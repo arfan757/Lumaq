@@ -21,3 +21,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Recoverable click-through mode with System Tray management.
 - Unit tests for LRC parser, normalizer, cache, settings, and frontend interpolation logic.
 - GitHub Actions CI workflow for frontend and backend validation.
+

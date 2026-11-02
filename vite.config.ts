@@ -17,3 +17,4 @@ export default defineConfig(async () => ({
     globals: true,
   },
 }));
+

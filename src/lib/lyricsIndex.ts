@@ -66,3 +66,4 @@ export function getLyricDisplay(
     nextText: next.length > 0 ? next : "",
   };
 }
+

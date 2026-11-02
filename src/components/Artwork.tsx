@@ -34,3 +34,4 @@ export const Artwork: React.FC<ArtworkProps> = ({ artwork, title = "Album Artwor
     </div>
   );
 };
+

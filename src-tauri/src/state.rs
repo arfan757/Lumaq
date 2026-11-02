@@ -10,3 +10,4 @@ pub struct AppState {
     pub settings: Arc<Mutex<AppSettings>>,
     pub settings_path: PathBuf,
 }
+

@@ -100,3 +100,4 @@ To solve this cleanly:
   `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; font-src 'self';`
 - **Zero Frontend Network Access:** All HTTP requests are performed by the Rust backend. The frontend communicates exclusively via Tauri IPC.
 - **Font & Asset Isolation:** All typography (Inter) is bundled locally via `@fontsource/inter`.
+

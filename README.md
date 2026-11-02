@@ -86,3 +86,4 @@ Right-click the Lumaq card or use the **System Tray icon** in your taskbar to op
 - **Disclaimer:** Lumaq is an unofficial open-source utility and is not affiliated, endorsed, or associated with Spotify AB or any media streaming service.
 - **Lyrics:** Synced and plain lyrics are provided by the community through [LRCLIB](https://lrclib.net). No copyrighted lyrics are bundled with this application.
 - **License:** Released under the [MIT License](LICENSE).
+

@@ -62,3 +62,4 @@ export interface Snapshot {
   lyrics: LyricsState | null;
   settings: AppSettings;
 }
+
