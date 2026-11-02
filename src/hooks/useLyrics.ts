@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { LyricsState, NowPlaying } from "../lib/types";
@@ -9,22 +9,13 @@ export function useLyrics(
   positionMs: number,
   offsetMs: number = 0
 ) {
-  const [currentTrackKey, setCurrentTrackKey] = useState<string | null>(null);
-  const [lyricsState, setLyricsState] = useState<LyricsState | null>(null);
-
-  // Sync state when nowPlaying track changes
-  if (nowPlaying?.trackKey !== currentTrackKey) {
-    setCurrentTrackKey(nowPlaying?.trackKey ?? null);
-    setLyricsState(
-      nowPlaying ? { kind: "loading", trackKey: nowPlaying.trackKey } : null
-    );
-  }
+  const [backendLyrics, setBackendLyrics] = useState<LyricsState | null>(null);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
 
     listen<LyricsState>("lumaq://lyrics", (event) => {
-      setLyricsState(event.payload);
+      setBackendLyrics(event.payload);
     }).then((un) => {
       unlisten = un;
     });
@@ -34,6 +25,19 @@ export function useLyrics(
     };
   }, []);
 
+  const trackKey = nowPlaying?.trackKey ?? null;
+
+  // Derive lyricsState: loading if track exists but lyrics haven't arrived for it yet
+  const lyricsState: LyricsState | null = useMemo(() => {
+    if (!trackKey) {
+      return null;
+    }
+    if (backendLyrics && backendLyrics.trackKey === trackKey) {
+      return backendLyrics;
+    }
+    return { kind: "loading", trackKey };
+  }, [trackKey, backendLyrics]);
+
   // Compute active lyric index via binary search
   const activeLyricIndex = useMemo(() => {
     if (lyricsState?.kind === "synced") {
@@ -42,9 +46,9 @@ export function useLyrics(
     return -1;
   }, [lyricsState, positionMs, offsetMs]);
 
-  const refetchLyrics = () => {
+  const refetchLyrics = useCallback(() => {
     invoke("lyrics_refetch").catch(console.debug);
-  };
+  }, []);
 
   return {
     lyricsState,
