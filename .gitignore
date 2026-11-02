@@ -17,3 +17,5 @@ Thumbs.db
 .xwin-cache/
 
 .agents
+*.exe
+*.dll
