@@ -9,7 +9,7 @@ edition = "2021"
 
 [lib]
 name = "lumaq_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+crate-type = ["staticlib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2.7.4" }
