@@ -19,6 +19,18 @@
         overflow: hidden;
       }
     </style>
+    <script>
+      window.addEventListener('error', function(e) {
+        var errBox = document.getElementById('error-display');
+        if (!errBox) {
+          errBox = document.createElement('div');
+          errBox.id = 'error-display';
+          errBox.style = 'position:fixed;inset:10px;background:rgba(20,0,0,0.9);color:#ff5555;padding:15px;border-radius:12px;z-index:999999;font-family:sans-serif;font-size:12px;overflow:auto;';
+          document.body.appendChild(errBox);
+        }
+        errBox.innerHTML += '<b>Error:</b> ' + e.message + '<br/><pre>' + (e.error ? e.error.stack : '') + '</pre><br/>';
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>

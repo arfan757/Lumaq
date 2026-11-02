@@ -76,8 +76,17 @@ pub fn run() {
 
             // Main window configuration
             if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.center();
+                let _ = window.set_focus();
                 let _ = window.set_always_on_top(settings.always_on_top);
                 let _ = window.set_ignore_cursor_events(settings.click_through);
+
+                info!(
+                    "Main window initialized: visible={:?}, position={:?}",
+                    window.is_visible(),
+                    window.outer_position()
+                );
 
                 // Multi-monitor sanity check: ensure window is within monitor bounds
                 let win_clone = window.clone();
@@ -85,6 +94,8 @@ pub fn run() {
                     tokio::time::sleep(std::time::Duration::from_millis(150)).await;
                     validate_window_bounds(&win_clone);
                 });
+            } else {
+                warn!("Main webview window 'main' not found in setup!");
             }
 
             // Event forwarding loop
