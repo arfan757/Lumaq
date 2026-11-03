@@ -11,7 +11,16 @@ export function useLyrics(
 ) {
   const [backendLyrics, setBackendLyrics] = useState<LyricsState | null>(null);
 
+  // 1. Initial snapshot fetch and event listener
   useEffect(() => {
+    invoke<{ lyrics: LyricsState | null }>("get_snapshot")
+      .then((snapshot) => {
+        if (snapshot?.lyrics) {
+          setBackendLyrics(snapshot.lyrics);
+        }
+      })
+      .catch(console.debug);
+
     let unlisten: (() => void) | undefined;
 
     listen<LyricsState>("lumaq://lyrics", (event) => {
@@ -27,7 +36,14 @@ export function useLyrics(
 
   const trackKey = nowPlaying?.trackKey ?? null;
 
-  // Derive lyricsState: loading if track exists but lyrics haven't arrived for it yet
+  // 2. Fetch lyrics if we have an active track but no lyrics matching it yet
+  useEffect(() => {
+    if (trackKey && (!backendLyrics || backendLyrics.trackKey !== trackKey)) {
+      invoke("lyrics_refetch").catch(console.debug);
+    }
+  }, [trackKey, backendLyrics]);
+
+  // 3. Derive lyricsState
   const lyricsState: LyricsState | null = useMemo(() => {
     if (!trackKey) {
       return null;

@@ -48,14 +48,31 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 140px;
-  height: 90px;
+  width: 150px;
+  height: 95px;
   border-top-left-radius: var(--card-radius);
   background: radial-gradient(
-    ellipse at 12% 12%,
-    rgba(255, 255, 255, 0.65) 0%,
-    rgba(255, 255, 255, 0.25) 30%,
+    ellipse at 15% 15%,
+    rgba(255, 255, 255, 0.75) 0%,
+    rgba(255, 255, 255, 0.25) 35%,
     rgba(255, 255, 255, 0) 70%
+  );
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Subtle bottom rim flare */
+.glass-bottom-flare {
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
+  height: 1.5px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.65) 50%,
+    rgba(255, 255, 255, 0) 100%
   );
   pointer-events: none;
   z-index: 4;

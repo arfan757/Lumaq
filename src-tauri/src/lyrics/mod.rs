@@ -57,6 +57,7 @@ pub struct LyricsManager {
     client: Arc<LrclibClient>,
     cache: Arc<Mutex<LyricsDiskCache>>,
     current_request_id: Arc<AtomicU64>,
+    current_state: Arc<Mutex<Option<LyricsState>>>,
     event_tx: broadcast::Sender<LyricsState>,
 }
 
@@ -67,6 +68,7 @@ impl LyricsManager {
             client: Arc::new(LrclibClient::new()),
             cache: Arc::new(Mutex::new(LyricsDiskCache::new(app_data_dir))),
             current_request_id: Arc::new(AtomicU64::new(0)),
+            current_state: Arc::new(Mutex::new(None)),
             event_tx,
         };
 
@@ -75,6 +77,11 @@ impl LyricsManager {
 
     pub fn subscribe(&self) -> broadcast::Receiver<LyricsState> {
         self.event_tx.subscribe()
+    }
+
+    pub async fn current_lyrics(&self) -> Option<LyricsState> {
+        let guard = self.current_state.lock().await;
+        guard.clone()
     }
 
     pub async fn on_track_change(
@@ -93,14 +100,23 @@ impl LyricsManager {
                 track_key,
                 text: "Ad playing".to_string(),
             };
+            {
+                let mut guard = self.current_state.lock().await;
+                *guard = Some(state.clone());
+            }
             let _ = self.event_tx.send(state);
             return;
         }
 
         // 1. Emit loading state
-        let _ = self.event_tx.send(LyricsState::Loading {
+        let loading_state = LyricsState::Loading {
             track_key: track_key.clone(),
-        });
+        };
+        {
+            let mut guard = self.current_state.lock().await;
+            *guard = Some(loading_state.clone());
+        }
+        let _ = self.event_tx.send(loading_state);
 
         // 2. Check disk cache first
         {
@@ -122,6 +138,10 @@ impl LyricsManager {
                         track_key: track_key.clone(),
                     },
                 };
+                {
+                    let mut guard = self.current_state.lock().await;
+                    *guard = Some(state.clone());
+                }
                 let _ = self.event_tx.send(state);
                 return;
             }
@@ -131,6 +151,7 @@ impl LyricsManager {
         let client = Arc::clone(&self.client);
         let cache_lock = Arc::clone(&self.cache);
         let req_id_atomic = Arc::clone(&self.current_request_id);
+        let state_lock = Arc::clone(&self.current_state);
         let tx = self.event_tx.clone();
 
         tokio::spawn(async move {
@@ -191,6 +212,10 @@ impl LyricsManager {
                 },
             };
 
+            {
+                let mut guard = state_lock.lock().await;
+                *guard = Some(state.clone());
+            }
             let _ = tx.send(state);
         });
     }

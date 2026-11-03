@@ -19,12 +19,13 @@ pub struct Snapshot {
 pub async fn get_snapshot(state: State<'_, AppState>) -> Result<Snapshot, String> {
     let now_playing = state.media_source.current_now_playing().await;
     let playback = state.media_source.current_playback().await;
+    let lyrics = state.lyrics_manager.current_lyrics().await;
     let settings = { state.settings.lock().unwrap().clone() };
 
     Ok(Snapshot {
         now_playing,
         playback,
-        lyrics: None,
+        lyrics,
         settings,
     })
 }

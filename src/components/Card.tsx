@@ -110,6 +110,9 @@ export const Card: React.FC<CardProps> = ({
       {/* Inset highlight */}
       <div className="glass-highlights" data-tauri-drag-region={!settings.lockPosition} />
 
+      {/* Bottom specular flare */}
+      <div className="glass-bottom-flare" data-tauri-drag-region={!settings.lockPosition} />
+
       {/* Glass content surface */}
       <div className="glass-content" data-tauri-drag-region={!settings.lockPosition}>
         {/* Top row: Artwork + Lyrics */}
