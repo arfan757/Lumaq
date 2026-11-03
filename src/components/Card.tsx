@@ -66,13 +66,13 @@ export const Card: React.FC<CardProps> = ({
     if (!el || !window.liquidGlass) return;
 
     glassRef.current = window.liquidGlass(el, {
-      scale: -90,      // refraction strength — subtle so text stays legible
-      chroma: 5,       // chromatic fringe width
-      border: 0.12,    // fraction of element size for rim band
-      mapBlur: 18,     // softness of the refraction edge
-      blur: 14,        // frosted blur behind the glass
-      saturate: 1.5,   // colour pop
-      fallbackBlur: 20, // Safari/Firefox fallback
+      scale: -112,     // standard liquid glass refraction strength
+      chroma: 6,       // chromatic fringe width
+      border: 0.08,    // fraction of element size for rim band
+      mapBlur: 14,     // curvature of the bulge
+      blur: 8,         // subtle frosted blur behind the glass
+      saturate: 1.3,   // colour pop
+      fallbackBlur: 16,// Safari/Firefox fallback
     });
 
     return () => {
@@ -86,10 +86,6 @@ export const Card: React.FC<CardProps> = ({
     setSettingsOpen((prev) => !prev);
   };
 
-  const bgStyle = nowPlaying?.artwork
-    ? { backgroundImage: `url(${nowPlaying.artwork})` }
-    : undefined;
-
   return (
     <div
       ref={containerRef}
@@ -102,23 +98,16 @@ export const Card: React.FC<CardProps> = ({
         transformOrigin: "center center",
       }}
     >
-      {/* Blurred artwork background layer */}
-      <div
-        className={`glass-artwork-bg ${!nowPlaying?.artwork ? "fallback" : ""}`}
-        style={bgStyle}
-        data-tauri-drag-region={!settings.lockPosition}
-      />
-
-      {/* Dark base tint layer */}
-      <div className="glass-tint" data-tauri-drag-region={!settings.lockPosition} />
-
-      {/* Diagonal sheen */}
+      {/* Diagonal glass sheen */}
       <div className="glass-sheen" data-tauri-drag-region={!settings.lockPosition} />
 
       {/* 1px Specular rim light */}
       <div className="glass-rim" data-tauri-drag-region={!settings.lockPosition} />
 
-      {/* Inset highlight and glow */}
+      {/* Top-left corner liquid glare highlight */}
+      <div className="glass-corner-glare" data-tauri-drag-region={!settings.lockPosition} />
+
+      {/* Inset highlight */}
       <div className="glass-highlights" data-tauri-drag-region={!settings.lockPosition} />
 
       {/* Glass content surface */}

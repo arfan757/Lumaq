@@ -1,4 +1,4 @@
-/* Liquid Glass Effects */
+/* Liquid Glass Effects — Pure, Translucent, See-Through */
 .glass-container {
   position: relative;
   width: var(--card-width);
@@ -6,40 +6,15 @@
   border-radius: var(--card-radius);
   overflow: hidden;
   box-sizing: border-box;
+  background: var(--color-bg-base);
   box-shadow: var(--card-shadow);
   user-select: none;
-  /* backdrop-filter is set by liquid-glass.js; fallback here */
-  backdrop-filter: blur(32px) saturate(1.4);
-  -webkit-backdrop-filter: blur(32px) saturate(1.4);
+  /* Frosted blur fallback; enhanced dynamically by liquid-glass.js with SVG refraction */
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
 }
 
-/* Background blurred album art / fallback layer */
-.glass-artwork-bg {
-  position: absolute;
-  inset: -30px;
-  background-size: cover;
-  background-position: center;
-  filter: blur(60px) saturate(1.6) brightness(0.35);
-  opacity: 0.7;
-  transition: opacity 500ms var(--ease-spring), background-image 500ms ease;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.glass-artwork-bg.fallback {
-  background: radial-gradient(circle at 40% 80%, #1a1a2e 0%, #0a0a0f 100%);
-}
-
-/* Dark tint base layer */
-.glass-tint {
-  position: absolute;
-  inset: 0;
-  background: var(--color-bg-base);
-  z-index: 1;
-  pointer-events: none;
-}
-
-/* Diagonal glass sheen — very subtle top-left catch */
+/* Diagonal glass sheen — faint specular sweep across the glass face */
 .glass-sheen {
   position: absolute;
   inset: 0;
@@ -48,18 +23,18 @@
   pointer-events: none;
 }
 
-/* Specular rim border highlight */
+/* 1px Specular rim border highlight */
 .glass-rim {
   position: absolute;
   inset: 0;
   border-radius: var(--card-radius);
   padding: 1px;
   background: linear-gradient(
-    150deg,
-    rgba(255, 255, 255, 0.32) 0%,
-    rgba(255, 255, 255, 0.06) 35%,
-    rgba(255, 255, 255, 0.02) 65%,
-    rgba(255, 255, 255, 0.18) 100%
+    135deg,
+    rgba(255, 255, 255, 0.65) 0%,
+    rgba(255, 255, 255, 0.2) 30%,
+    rgba(255, 255, 255, 0.05) 60%,
+    rgba(255, 255, 255, 0.35) 100%
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
@@ -68,21 +43,32 @@
   z-index: 3;
 }
 
-/* Inset highlights + bottom glow that defines the reference look */
+/* Top-left corner liquid glare — signature Apple liquid glass highlight */
+.glass-corner-glare {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 140px;
+  height: 90px;
+  border-top-left-radius: var(--card-radius);
+  background: radial-gradient(
+    ellipse at 12% 12%,
+    rgba(255, 255, 255, 0.65) 0%,
+    rgba(255, 255, 255, 0.25) 30%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Inset highlights — crisp specular top catch and subtle bottom rim */
 .glass-highlights {
   position: absolute;
   inset: 0;
   border-radius: var(--card-radius);
   box-shadow:
-    /* Top inset bright rim */
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    /* Bottom inset warm edge — mimics the strong bottom glow in reference */
-    inset 0 -1px 0 rgba(255, 200, 120, 0.15),
-    /* Outer bottom glow bleeding onto desktop */
-    0 20px 50px -10px rgba(255, 210, 140, 0.22),
-    0 8px 24px -4px rgba(255, 255, 255, 0.08),
-    /* Depth shadow */
-    0 2px 8px rgba(0, 0, 0, 0.45);
+    inset 0 1px 1px rgba(255, 255, 255, 0.6),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.25);
   pointer-events: none;
   z-index: 4;
 }

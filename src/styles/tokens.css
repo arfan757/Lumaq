@@ -7,32 +7,31 @@
   --card-radius: 22px;
   --window-padding: 16px;
   --art-size: 80px;
-  --art-radius: 10px;
+  --art-radius: 12px;
 
-  /* Colors */
-  --color-bg-base: rgba(8, 8, 10, 0.88);
+  /* Colors — Clear Liquid Glass (translucent & see-through) */
+  --color-bg-base: rgba(255, 255, 255, 0.04);
   --color-glass-sheen: linear-gradient(
-    160deg,
-    rgba(255, 255, 255, 0.07) 0%,
-    rgba(255, 255, 255, 0.01) 60%,
-    rgba(255, 255, 255, 0.0) 100%
+    135deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.01) 50%,
+    rgba(255, 255, 255, 0.04) 100%
   );
   --color-text-primary: #ffffff;
-  --color-text-secondary: rgba(255, 255, 255, 0.6);
-  --color-text-dimmed: rgba(255, 255, 255, 0.38);
-  --color-text-disabled: rgba(255, 255, 255, 0.2);
+  --color-text-secondary: rgba(255, 255, 255, 0.85);
+  --color-text-dimmed: rgba(255, 255, 255, 0.5);
+  --color-text-disabled: rgba(255, 255, 255, 0.25);
   --color-accent: #ffffff;
-  --color-accent-ring: rgba(255, 255, 255, 0.9);
+  --color-accent-ring: rgba(255, 255, 255, 0.85);
 
-  /* Shadows & Glow */
+  /* Shadows & Glow — Clean, lightweight, minimal drop shadow with glass specular borders */
   --card-shadow:
-    0 0 0 0.5px rgba(255, 255, 255, 0.12),
-    0 4px 24px rgba(0, 0, 0, 0.6),
-    0 1px 3px rgba(0, 0, 0, 0.5),
-    /* Bottom edge glow — the signature effect from the reference */
-    0 24px 60px -8px rgba(255, 230, 180, 0.18),
-    0 16px 40px -4px rgba(255, 255, 255, 0.1);
-  --inset-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    0 8px 24px rgba(0, 0, 0, 0.18),
+    0 2px 6px rgba(0, 0, 0, 0.1),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  --inset-highlight: inset 0 1px 1px rgba(255, 255, 255, 0.5);
 
   /* Transitions */
   --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
