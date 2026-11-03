@@ -8,25 +8,26 @@
   box-sizing: border-box;
   box-shadow: var(--card-shadow);
   user-select: none;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  /* backdrop-filter is set by liquid-glass.js; fallback here */
+  backdrop-filter: blur(32px) saturate(1.4);
+  -webkit-backdrop-filter: blur(32px) saturate(1.4);
 }
 
 /* Background blurred album art / fallback layer */
 .glass-artwork-bg {
   position: absolute;
-  inset: -20px;
+  inset: -30px;
   background-size: cover;
   background-position: center;
-  filter: blur(40px) saturate(1.8);
-  opacity: 0.55;
-  transition: opacity 400ms var(--ease-spring), background-image 400ms ease;
+  filter: blur(60px) saturate(1.6) brightness(0.35);
+  opacity: 0.7;
+  transition: opacity 500ms var(--ease-spring), background-image 500ms ease;
   z-index: 0;
   pointer-events: none;
 }
 
 .glass-artwork-bg.fallback {
-  background: radial-gradient(circle at 30% 20%, #4a34ff 0%, #0a64ff 40%, #00e8d2 90%);
+  background: radial-gradient(circle at 40% 80%, #1a1a2e 0%, #0a0a0f 100%);
 }
 
 /* Dark tint base layer */
@@ -38,7 +39,7 @@
   pointer-events: none;
 }
 
-/* Diagonal glass sheen */
+/* Diagonal glass sheen — very subtle top-left catch */
 .glass-sheen {
   position: absolute;
   inset: 0;
@@ -54,11 +55,11 @@
   border-radius: var(--card-radius);
   padding: 1px;
   background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.45) 0%,
-    rgba(255, 255, 255, 0.1) 40%,
-    rgba(255, 255, 255, 0.05) 60%,
-    rgba(255, 255, 255, 0.35) 100%
+    150deg,
+    rgba(255, 255, 255, 0.32) 0%,
+    rgba(255, 255, 255, 0.06) 35%,
+    rgba(255, 255, 255, 0.02) 65%,
+    rgba(255, 255, 255, 0.18) 100%
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
@@ -67,16 +68,21 @@
   z-index: 3;
 }
 
-/* Inset top highlight and outer edge glow */
+/* Inset highlights + bottom glow that defines the reference look */
 .glass-highlights {
   position: absolute;
   inset: 0;
   border-radius: var(--card-radius);
-  box-shadow: 
-    var(--inset-highlight),
-    inset 0 -8px 20px rgba(255, 255, 255, 0.04),
-    0 -1px 8px rgba(255, 255, 255, 0.12),
-    0 4px 16px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    /* Top inset bright rim */
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    /* Bottom inset warm edge — mimics the strong bottom glow in reference */
+    inset 0 -1px 0 rgba(255, 200, 120, 0.15),
+    /* Outer bottom glow bleeding onto desktop */
+    0 20px 50px -10px rgba(255, 210, 140, 0.22),
+    0 8px 24px -4px rgba(255, 255, 255, 0.08),
+    /* Depth shadow */
+    0 2px 8px rgba(0, 0, 0, 0.45);
   pointer-events: none;
   z-index: 4;
 }
@@ -90,7 +96,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 18px 20px 16px 20px;
+  padding: 16px 18px 14px 18px;
   box-sizing: border-box;
 }
 

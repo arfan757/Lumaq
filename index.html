@@ -34,6 +34,8 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- liquid-glass.js must load before React so window.liquidGlass is available on mount -->
+    <script src="/liquid-glass.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

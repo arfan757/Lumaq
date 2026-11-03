@@ -26,7 +26,7 @@
 /* Header / Top Row */
 .card-top-row {
   display: flex;
-  gap: 16px;
+  gap: 14px;
   align-items: center;
   height: var(--art-size);
 }
@@ -39,8 +39,11 @@
   border-radius: var(--art-radius);
   overflow: hidden;
   position: relative;
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  background: rgba(255, 255, 255, 0.05);
+  /* Subtle glow under album art */
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.5),
+    0 0 0 0.5px rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -64,9 +67,9 @@
 }
 
 .artwork-placeholder svg {
-  width: 42px;
-  height: 42px;
-  opacity: 0.6;
+  width: 36px;
+  height: 36px;
+  opacity: 0.5;
 }
 
 /* Lyrics Display Container */
@@ -82,35 +85,34 @@
 }
 
 .lyric-line-current {
-  font-size: 15px;
-  line-height: 1.35;
+  font-size: 14px;
+  line-height: 1.3;
   font-style: italic;
   font-weight: 600;
   color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transform: translateY(0);
   opacity: 1;
-  transition: opacity var(--duration-transition) var(--ease-spring), transform var(--duration-transition) var(--ease-spring);
+  transition: opacity var(--duration-transition) var(--ease-spring);
 }
 
 .lyric-line-next {
-  font-size: 13px;
-  line-height: 1.35;
+  font-size: 12.5px;
+  line-height: 1.3;
   font-weight: 400;
   color: var(--color-text-dimmed);
-  margin-top: 6px;
+  margin-top: 5px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  opacity: 0.65;
-  transition: opacity var(--duration-transition) var(--ease-spring), transform var(--duration-transition) var(--ease-spring);
+  opacity: 0.6;
+  transition: opacity var(--duration-transition) var(--ease-spring);
 }
 
 /* Special State Messages */
 .lyrics-status-message {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--color-text-secondary);
   display: flex;
@@ -119,15 +121,15 @@
 }
 
 .lyrics-subtext {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--color-text-dimmed);
 }
 
 /* Shimmer animation for loading state */
 @keyframes shimmer {
-  0% { opacity: 0.35; }
-  50% { opacity: 0.85; }
-  100% { opacity: 0.35; }
+  0% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.3; }
 }
 
 .lyrics-loading-shimmer {
@@ -138,23 +140,23 @@
 .progress-section {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin: 10px 0 6px 0;
+  gap: 5px;
+  margin: 8px 0 4px 0;
 }
 
 .progress-bar-track {
   position: relative;
   width: 100%;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.16);
+  height: 3px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.14);
   cursor: pointer;
   overflow: visible;
   transition: height 150ms ease;
 }
 
 .progress-bar-track:hover {
-  height: 6px;
+  height: 5px;
 }
 
 .progress-bar-fill {
@@ -162,33 +164,38 @@
   left: 0;
   top: 0;
   bottom: 0;
-  border-radius: 2px;
+  border-radius: 3px;
   background: #ffffff;
   pointer-events: none;
 }
 
+/* Glowing thumb matching the reference screenshot */
 .progress-bar-thumb {
   position: absolute;
   top: 50%;
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
   background: #ffffff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 0 6px 2px rgba(255, 220, 160, 0.5),
+    0 1px 4px rgba(0, 0, 0, 0.4);
   transform: translate(-50%, -50%);
-  opacity: 0.9;
   pointer-events: none;
-  transition: transform 150ms ease;
+  transition: transform 150ms ease, box-shadow 150ms ease;
 }
 
 .progress-bar-track:hover .progress-bar-thumb {
-  transform: translate(-50%, -50%) scale(1.25);
+  transform: translate(-50%, -50%) scale(1.3);
+  box-shadow:
+    0 0 10px 3px rgba(255, 220, 160, 0.6),
+    0 1px 4px rgba(0, 0, 0, 0.4);
 }
 
 .progress-time-row {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 10.5px;
   font-variant-numeric: tabular-nums;
   color: var(--color-text-dimmed);
   letter-spacing: 0.02em;
@@ -199,13 +206,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 4px;
+  padding: 0 2px;
 }
 
 .control-btn {
   background: transparent;
   border: none;
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.55);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -218,37 +225,56 @@
 
 .control-btn:hover:not(:disabled) {
   color: var(--color-text-primary);
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: rgba(255, 255, 255, 0.07);
 }
 
 .control-btn:active:not(:disabled) {
-  transform: scale(0.92);
+  transform: scale(0.90);
 }
 
 .control-btn:focus-visible {
-  box-shadow: 0 0 0 2px var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
 }
 
 .control-btn:disabled {
-  opacity: 0.25;
+  opacity: 0.2;
   cursor: not-allowed;
 }
 
 .control-btn.active {
-  color: var(--color-accent);
+  color: rgba(255, 255, 255, 0.9);
 }
 
+/* Play/Pause — filled white circle matching the reference */
 .control-btn-play-pause {
-  width: 44px;
-  height: 44px;
-  border: 1.5px solid var(--color-accent-ring);
+  width: 42px;
+  height: 42px;
+  background: rgba(255, 255, 255, 0.96);
+  border: none;
   border-radius: 50%;
-  color: #ffffff;
+  color: #0a0a0f;
+  box-shadow:
+    0 0 16px rgba(255, 220, 160, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.5);
+  transition: background 150ms ease, transform 100ms ease, box-shadow 150ms ease;
 }
 
 .control-btn-play-pause:hover:not(:disabled) {
-  background-color: rgba(255, 255, 255, 0.15);
-  border-color: #ffffff;
+  background: #ffffff;
+  box-shadow:
+    0 0 22px rgba(255, 220, 160, 0.45),
+    0 2px 10px rgba(0, 0, 0, 0.5);
+  color: #000000;
+}
+
+.control-btn-play-pause:active:not(:disabled) {
+  transform: scale(0.93);
+}
+
+.control-btn-play-pause:disabled {
+  background: rgba(255, 255, 255, 0.3);
+  color: rgba(0, 0, 0, 0.4);
+  box-shadow: none;
 }
 
 /* Settings Drawer / Overlay inside card */
@@ -256,10 +282,10 @@
   position: absolute;
   inset: 0;
   z-index: 50;
-  background: rgba(14, 14, 18, 0.94);
+  background: rgba(8, 8, 10, 0.96);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  padding: 18px 20px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -270,7 +296,7 @@
 
 @keyframes fadeIn {
   from { opacity: 0; transform: scale(0.97); }
-  to { opacity: 1; transform: scale(1); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 .settings-header {
@@ -281,7 +307,7 @@
 }
 
 .settings-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -302,7 +328,7 @@
 .settings-items {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   font-size: 12px;
 }
 
