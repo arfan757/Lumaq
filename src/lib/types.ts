@@ -32,12 +32,12 @@ export interface LyricLine {
 }
 
 export type LyricsState =
-  | { kind: "loading"; trackKey: string }
-  | { kind: "synced"; trackKey: string; lines: LyricLine[] }
-  | { kind: "plain"; trackKey: string; text: string }
-  | { kind: "instrumental"; trackKey: string }
-  | { kind: "notFound"; trackKey: string }
-  | { kind: "error"; trackKey: string; message: string };
+  | { kind: "loading"; trackKey: string; track_key?: string }
+  | { kind: "synced"; trackKey: string; track_key?: string; lines: LyricLine[] }
+  | { kind: "plain"; trackKey: string; track_key?: string; text: string }
+  | { kind: "instrumental"; trackKey: string; track_key?: string }
+  | { kind: "notFound"; trackKey: string; track_key?: string }
+  | { kind: "error"; trackKey: string; track_key?: string; message: string };
 
 export type SourcePreference = "spotify-first" | "any";
 

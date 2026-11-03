@@ -4,6 +4,11 @@ import { invoke } from "@tauri-apps/api/core";
 import { LyricsState, NowPlaying } from "../lib/types";
 import { findActiveLyricIndex } from "../lib/lyricsIndex";
 
+function extractKey(obj: any): string | null {
+  if (!obj) return null;
+  return obj.trackKey ?? obj.track_key ?? null;
+}
+
 export function useLyrics(
   nowPlaying: NowPlaying | null,
   positionMs: number,
@@ -16,7 +21,9 @@ export function useLyrics(
     invoke<{ lyrics: LyricsState | null }>("get_snapshot")
       .then((snapshot) => {
         if (snapshot?.lyrics) {
-          setBackendLyrics(snapshot.lyrics);
+          const raw = snapshot.lyrics as any;
+          const key = extractKey(raw) || "";
+          setBackendLyrics({ ...raw, trackKey: key });
         }
       })
       .catch(console.debug);
@@ -24,7 +31,11 @@ export function useLyrics(
     let unlisten: (() => void) | undefined;
 
     listen<LyricsState>("lumaq://lyrics", (event) => {
-      setBackendLyrics(event.payload);
+      const raw = event.payload as any;
+      if (raw) {
+        const key = extractKey(raw) || "";
+        setBackendLyrics({ ...raw, trackKey: key });
+      }
     }).then((un) => {
       unlisten = un;
     });
@@ -34,11 +45,12 @@ export function useLyrics(
     };
   }, []);
 
-  const trackKey = nowPlaying?.trackKey ?? null;
+  const trackKey = extractKey(nowPlaying);
 
   // 2. Fetch lyrics if we have an active track but no lyrics matching it yet
   useEffect(() => {
-    if (trackKey && (!backendLyrics || backendLyrics.trackKey !== trackKey)) {
+    const backendKey = extractKey(backendLyrics);
+    if (trackKey && backendKey !== trackKey) {
       invoke("lyrics_refetch").catch(console.debug);
     }
   }, [trackKey, backendLyrics]);
@@ -48,7 +60,8 @@ export function useLyrics(
     if (!trackKey) {
       return null;
     }
-    if (backendLyrics && backendLyrics.trackKey === trackKey) {
+    const backendKey = extractKey(backendLyrics);
+    if (backendLyrics && backendKey === trackKey) {
       return backendLyrics;
     }
     return { kind: "loading", trackKey };
