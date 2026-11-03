@@ -98,24 +98,39 @@ pub fn run() {
                 warn!("Main webview window 'main' not found in setup!");
             }
 
-            // Event forwarding loop
+            // Event forwarding loop with robust Lagged handling so receivers never die
             let handle_np = app_handle.clone();
             let lyrics_for_np = Arc::clone(&lyrics_manager);
             #[cfg(windows)]
             tauri::async_runtime::spawn(async move {
-                while let Ok(np_opt) = np_rx.recv().await {
-                    let _ = handle_np.emit("lumaq://now-playing", &np_opt);
-                    if let Some(np) = np_opt {
-                        lyrics_for_np
-                            .on_track_change(
-                                np.track_key,
-                                np.title,
-                                np.artist,
-                                np.album,
-                                np.duration_ms,
-                                np.is_ad,
-                            )
-                            .await;
+                loop {
+                    match np_rx.recv().await {
+                        Ok(np_opt) => {
+                            let _ = handle_np.emit("lumaq://now-playing", &np_opt);
+                            if let Some(np) = np_opt {
+                                lyrics_for_np
+                                    .on_track_change(
+                                        np.track_key,
+                                        np.title,
+                                        np.artist,
+                                        np.album,
+                                        np.duration_ms,
+                                        np.is_ad,
+                                    )
+                                    .await;
+                            }
+                        }
+                        Err(tokio::sync::broadcast::error::RecvError::Lagged(skipped)) => {
+                            tracing::debug!(
+                                "NowPlaying broadcast channel lagged by {} messages",
+                                skipped
+                            );
+                            continue;
+                        }
+                        Err(tokio::sync::broadcast::error::RecvError::Closed) => {
+                            tracing::info!("NowPlaying broadcast channel closed");
+                            break;
+                        }
                     }
                 }
             });
@@ -124,15 +139,45 @@ pub fn run() {
             let handle_pb = app_handle.clone();
             #[cfg(windows)]
             tauri::async_runtime::spawn(async move {
-                while let Ok(pb) = pb_rx.recv().await {
-                    let _ = handle_pb.emit("lumaq://playback", &pb);
+                loop {
+                    match pb_rx.recv().await {
+                        Ok(pb) => {
+                            let _ = handle_pb.emit("lumaq://playback", &pb);
+                        }
+                        Err(tokio::sync::broadcast::error::RecvError::Lagged(skipped)) => {
+                            tracing::debug!(
+                                "Playback broadcast channel lagged by {} messages",
+                                skipped
+                            );
+                            continue;
+                        }
+                        Err(tokio::sync::broadcast::error::RecvError::Closed) => {
+                            tracing::info!("Playback broadcast channel closed");
+                            break;
+                        }
+                    }
                 }
             });
 
             let handle_lyrics = app_handle.clone();
             tauri::async_runtime::spawn(async move {
-                while let Ok(lyr) = lyrics_rx.recv().await {
-                    let _ = handle_lyrics.emit("lumaq://lyrics", &lyr);
+                loop {
+                    match lyrics_rx.recv().await {
+                        Ok(lyr) => {
+                            let _ = handle_lyrics.emit("lumaq://lyrics", &lyr);
+                        }
+                        Err(tokio::sync::broadcast::error::RecvError::Lagged(skipped)) => {
+                            tracing::debug!(
+                                "Lyrics broadcast channel lagged by {} messages",
+                                skipped
+                            );
+                            continue;
+                        }
+                        Err(tokio::sync::broadcast::error::RecvError::Closed) => {
+                            tracing::info!("Lyrics broadcast channel closed");
+                            break;
+                        }
+                    }
                 }
             });
 

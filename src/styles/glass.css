@@ -28,64 +28,54 @@
   position: absolute;
   inset: 0;
   border-radius: var(--card-radius);
-  padding: 1px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.65) 0%,
-    rgba(255, 255, 255, 0.2) 30%,
-    rgba(255, 255, 255, 0.05) 60%,
-    rgba(255, 255, 255, 0.35) 100%
-  );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   pointer-events: none;
   z-index: 3;
 }
 
-/* Top-left corner liquid glare — signature Apple liquid glass highlight */
+/* Top-left corner liquid glare — signature glowing curved glass rim matching reference */
 .glass-corner-glare {
   position: absolute;
   top: 0;
   left: 0;
-  width: 150px;
-  height: 95px;
+  width: 140px;
+  height: 65px;
   border-top-left-radius: var(--card-radius);
-  background: radial-gradient(
-    ellipse at 15% 15%,
-    rgba(255, 255, 255, 0.75) 0%,
-    rgba(255, 255, 255, 0.25) 35%,
-    rgba(255, 255, 255, 0) 70%
-  );
+  border-top: 2px solid rgba(255, 255, 255, 0.95);
+  border-left: 2px solid rgba(255, 255, 255, 0.85);
+  -webkit-mask: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.75) 35%, transparent 75%);
+  mask: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.75) 35%, transparent 75%);
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.5));
   pointer-events: none;
-  z-index: 4;
+  z-index: 5;
 }
 
 /* Subtle bottom rim flare */
 .glass-bottom-flare {
   position: absolute;
   bottom: 0;
-  left: 20%;
-  right: 20%;
-  height: 1.5px;
+  left: 18%;
+  right: 18%;
+  height: 2px;
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.65) 50%,
-    rgba(255, 255, 255, 0) 100%
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 20%,
+    rgba(255, 255, 255, 0.9) 50%,
+    rgba(255, 255, 255, 0.3) 80%,
+    transparent 100%
   );
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.7));
   pointer-events: none;
-  z-index: 4;
+  z-index: 5;
 }
 
-/* Inset highlights — crisp specular top catch and subtle bottom rim */
+/* Inset highlights — clean top catch */
 .glass-highlights {
   position: absolute;
   inset: 0;
   border-radius: var(--card-radius);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.6),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35);
   pointer-events: none;
   z-index: 4;
 }

@@ -55,7 +55,7 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
     return (
       <div className="lyrics-container">
         <div className="lyric-line-current" title={currentText}>
-          {currentText || "..."}
+          {currentText || (nextText ? "♪ Intro" : nowPlaying.title)}
         </div>
         <div className="lyric-line-next" title={nextText}>
           {nextText}
@@ -64,16 +64,21 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
     );
   }
 
-  // Plain lyrics state
+  // Plain lyrics state — show the first lines rather than hiding them
   if (lyricsState.kind === "plain") {
+    const plainLines = lyricsState.text
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+    const line1 = plainLines[0] || nowPlaying.title;
+    const line2 = plainLines[1] || nowPlaying.artist;
     return (
       <div className="lyrics-container">
-        <div className="lyrics-status-message">
-          <span style={{ fontWeight: 600 }}>{nowPlaying.title}</span>
-          <span className="lyrics-subtext">{nowPlaying.artist}</span>
-          <span className="lyrics-subtext" style={{ fontStyle: "italic", opacity: 0.6 }}>
-            Lyrics not synced
-          </span>
+        <div className="lyric-line-current" title={line1}>
+          {line1}
+        </div>
+        <div className="lyric-line-next" title={line2}>
+          {line2}
         </div>
       </div>
     );

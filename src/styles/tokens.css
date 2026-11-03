@@ -4,23 +4,22 @@
   /* Dimensions */
   --card-width: 360px;
   --card-height: 190px;
-  --card-radius: 22px;
+  --card-radius: 24px;
   --window-padding: 16px;
   --art-size: 80px;
-  --art-radius: 12px;
+  --art-radius: 14px;
 
   /* Colors — Clear Liquid Glass (translucent & see-through with physical glass depth) */
   --color-bg-base: linear-gradient(
-    150deg,
-    rgba(255, 255, 255, 0.14) 0%,
-    rgba(255, 255, 255, 0.03) 40%,
-    rgba(14, 14, 22, 0.22) 100%
+    135deg,
+    rgba(255, 255, 255, 0.09) 0%,
+    rgba(255, 255, 255, 0.02) 40%,
+    rgba(10, 10, 15, 0.28) 100%
   );
   --color-glass-sheen: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.16) 0%,
-    rgba(255, 255, 255, 0.02) 40%,
-    rgba(255, 255, 255, 0.06) 100%
+    rgba(255, 255, 255, 0.08) 0%,
+    transparent 50%
   );
   --color-text-primary: #ffffff;
   --color-text-secondary: rgba(255, 255, 255, 0.85);
@@ -31,13 +30,10 @@
 
   /* Shadows & Glow — Real glass refraction borders & clean, minimal depth shadow */
   --card-shadow:
-    0 12px 32px rgba(0, 0, 0, 0.22),
-    0 2px 8px rgba(0, 0, 0, 0.12),
-    inset 0 1.5px 1.5px rgba(255, 255, 255, 0.65),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.25),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
-    inset 0 0 30px rgba(255, 255, 255, 0.04);
-  --inset-highlight: inset 0 1.5px 1.5px rgba(255, 255, 255, 0.65);
+    0 16px 36px rgba(0, 0, 0, 0.28),
+    0 4px 10px rgba(0, 0, 0, 0.14),
+    inset 0 1px 1px rgba(255, 255, 255, 0.35);
+  --inset-highlight: inset 0 1px 1px rgba(255, 255, 255, 0.35);
 
   /* Transitions */
   --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
