@@ -8,7 +8,14 @@ interface LyricsViewProps {
   activeIndex: number;
 }
 
-export const LyricsView: React.FC<LyricsViewProps> = ({
+function lineSizeClass(text: string | undefined): string {
+  const length = text?.length ?? 0;
+  if (length > 64) return "lyric-line--dense";
+  if (length > 40) return "lyric-line--compact";
+  return "";
+}
+
+const LyricsViewComponent: React.FC<LyricsViewProps> = ({
   lyricsState,
   nowPlaying,
   activeIndex,
@@ -52,12 +59,16 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
   // Synced lyrics state
   if (lyricsState.kind === "synced") {
     const { currentText, nextText } = getLyricDisplay(lyricsState.lines, activeIndex);
+    const currentDisplay = currentText || (nextText ? "♪ Intro" : nowPlaying.title);
     return (
       <div className="lyrics-container">
-        <div className="lyric-line-current" title={currentText}>
-          {currentText || (nextText ? "♪ Intro" : nowPlaying.title)}
+        <div
+          className={`lyric-line-current ${lineSizeClass(currentDisplay)}`}
+          title={currentDisplay}
+        >
+          {currentDisplay}
         </div>
-        <div className="lyric-line-next" title={nextText}>
+        <div className={`lyric-line-next ${lineSizeClass(nextText)}`} title={nextText}>
           {nextText}
         </div>
       </div>
@@ -74,10 +85,10 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
     const line2 = plainLines[1] || nowPlaying.artist;
     return (
       <div className="lyrics-container">
-        <div className="lyric-line-current" title={line1}>
+        <div className={`lyric-line-current ${lineSizeClass(line1)}`} title={line1}>
           {line1}
         </div>
-        <div className="lyric-line-next" title={line2}>
+        <div className={`lyric-line-next ${lineSizeClass(line2)}`} title={line2}>
           {line2}
         </div>
       </div>
@@ -90,7 +101,9 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
       <div className="lyrics-container">
         <div className="lyrics-status-message">
           <span>Instrumental</span>
-          <span className="lyrics-subtext">{nowPlaying.title} — {nowPlaying.artist}</span>
+          <span className="lyrics-subtext">
+            {nowPlaying.title} — {nowPlaying.artist}
+          </span>
         </div>
       </div>
     );
@@ -103,7 +116,9 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
         <div className="lyrics-status-message">
           <span>{nowPlaying.title}</span>
           <span className="lyrics-subtext">{nowPlaying.artist}</span>
-          <span className="lyrics-subtext" style={{ opacity: 0.6 }}>No lyrics found</span>
+          <span className="lyrics-subtext" style={{ opacity: 0.6 }}>
+            No lyrics found
+          </span>
         </div>
       </div>
     );
@@ -116,7 +131,9 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
         <div className="lyrics-status-message">
           <span>{nowPlaying.title}</span>
           <span className="lyrics-subtext">{nowPlaying.artist}</span>
-          <span className="lyrics-subtext" style={{ opacity: 0.6 }}>Lyrics unavailable</span>
+          <span className="lyrics-subtext" style={{ opacity: 0.6 }}>
+            Lyrics unavailable
+          </span>
         </div>
       </div>
     );
@@ -125,3 +142,4 @@ export const LyricsView: React.FC<LyricsViewProps> = ({
   return null;
 };
 
+export const LyricsView = React.memo(LyricsViewComponent);

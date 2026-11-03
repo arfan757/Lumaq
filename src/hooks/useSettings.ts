@@ -5,7 +5,7 @@ import { AppSettings } from "../lib/types";
 const DEFAULT_SETTINGS: AppSettings = {
   scale: 1.0,
   opacity: 1.0,
-  alwaysOnTop: true,
+  alwaysOnTop: false,
   lockPosition: false,
   clickThrough: false,
   autostart: false,
@@ -14,7 +14,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   lyricsOffsetMs: 0,
   snapToEdges: true,
   realBlur: false,
-  schemaVersion: 1,
+  schemaVersion: 2,
 };
 
 export function useSettings() {

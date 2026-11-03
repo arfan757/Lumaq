@@ -14,6 +14,8 @@ use media::MediaSource;
 use settings::AppSettings;
 use state::AppState;
 
+#[cfg(windows)]
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
@@ -29,10 +31,12 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            info!("Second instance launched; focusing existing window");
+            info!("Second instance launched; showing existing desktop widget");
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();
-                let _ = window.set_focus();
+                let _ = window.set_skip_taskbar(true);
+                #[cfg(windows)]
+                apply_desktop_pinning(app, &window);
             }
         }))
         .plugin(tauri_plugin_window_state::Builder::default().build())
@@ -78,15 +82,78 @@ pub fn run() {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();
                 let _ = window.center();
-                let _ = window.set_focus();
-                let _ = window.set_always_on_top(settings.always_on_top);
+                let _ = window.set_skip_taskbar(true);
                 let _ = window.set_ignore_cursor_events(settings.click_through);
+
+                // Desktop widget: sit at the bottom of the z-order instead of
+                // floating over other applications, and never steal focus.
+                #[cfg(windows)]
+                apply_desktop_pinning(&app_handle, &window);
 
                 info!(
                     "Main window initialized: visible={:?}, position={:?}",
                     window.is_visible(),
                     window.outer_position()
                 );
+
+                // Clicking the widget (or the taskbar) raises it; drop it back
+                // to the desktop as soon as it gains focus.
+                #[cfg(windows)]
+                {
+                    let win_for_focus = window.clone();
+                    let handle_for_focus = app_handle.clone();
+                    window.on_window_event(move |event| {
+                        if let tauri::WindowEvent::Focused(true) = event {
+                            apply_desktop_pinning(&handle_for_focus, &win_for_focus);
+                        }
+                    });
+
+                    // "Show Desktop" (Win+D / taskbar button) does not minimize
+                    // windows: it raises the desktop above everything, covering
+                    // our bottom-most widget. Detect that state and temporarily
+                    // lift the widget above the desktop, then drop it back down
+                    // as soon as a real application regains the foreground.
+                    let win_for_watch = window.clone();
+                    let handle_for_watch = app_handle.clone();
+                    tauri::async_runtime::spawn(async move {
+                        let Ok(hwnd) = win_for_watch.hwnd() else {
+                            return;
+                        };
+                        let raw_hwnd = hwnd.0 as usize;
+                        let mut desktop_shown = false;
+
+                        loop {
+                            tokio::time::sleep(std::time::Duration::from_millis(250)).await;
+
+                            let always_on_top = handle_for_watch
+                                .state::<AppState>()
+                                .settings
+                                .lock()
+                                .map(|s| s.always_on_top)
+                                .unwrap_or(false);
+
+                            if always_on_top {
+                                if desktop_shown {
+                                    desktop_shown = false;
+                                    DESKTOP_SHOWN.store(false, Ordering::Relaxed);
+                                }
+                                continue;
+                            }
+
+                            if !desktop_shown {
+                                if desktop_covers_window(raw_hwnd) {
+                                    desktop_shown = true;
+                                    DESKTOP_SHOWN.store(true, Ordering::Relaxed);
+                                    set_window_topmost(raw_hwnd, true);
+                                }
+                            } else if foreground_is_foreign_non_desktop() {
+                                desktop_shown = false;
+                                DESKTOP_SHOWN.store(false, Ordering::Relaxed);
+                                set_window_topmost(raw_hwnd, false);
+                            }
+                        }
+                    });
+                }
 
                 // Multi-monitor sanity check: ensure window is within monitor bounds
                 let win_clone = window.clone();
@@ -224,8 +291,11 @@ fn setup_system_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Err
         &[&show_hide, &click_through, &always_on_top, &quit_item],
     )?;
 
-    let _tray = TrayIconBuilder::new()
-        .icon(app.default_window_icon().unwrap().clone())
+    let tray_icon = tauri::image::Image::from_bytes(include_bytes!("../icons/tray.png"))?;
+
+    let tray = TrayIconBuilder::new()
+        .icon(tray_icon)
+        .tooltip("Lumaq")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {
@@ -236,7 +306,9 @@ fn setup_system_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Err
                             let _ = window.hide();
                         } else {
                             let _ = window.show();
-                            let _ = window.set_focus();
+                            let _ = window.set_skip_taskbar(true);
+                            #[cfg(windows)]
+                            apply_desktop_pinning(app, &window);
                         }
                     }
                 }
@@ -264,6 +336,8 @@ fn setup_system_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Err
                         guard.always_on_top
                     };
                     let _ = window.set_always_on_top(new_val);
+                    #[cfg(windows)]
+                    apply_desktop_pinning(app, &window);
                     info!("Always-on-top toggled from tray: {}", new_val);
                 }
             }
@@ -287,7 +361,9 @@ fn setup_system_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Err
                             let _ = window.hide();
                         } else {
                             let _ = window.show();
-                            let _ = window.set_focus();
+                            let _ = window.set_skip_taskbar(true);
+                            #[cfg(windows)]
+                            apply_desktop_pinning(app, &window);
                         }
                     }
                 }
@@ -295,7 +371,187 @@ fn setup_system_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Err
         })
         .build(app)?;
 
+    // TrayIcon is ref-counted: it disappears when the last handle is dropped.
+    app.manage(tray);
+
     Ok(())
+}
+
+#[cfg(windows)]
+static DESKTOP_SHOWN: AtomicBool = AtomicBool::new(false);
+
+#[cfg(windows)]
+fn hwnd_from_raw(raw: usize) -> windows::Win32::Foundation::HWND {
+    windows::Win32::Foundation::HWND(raw as *mut std::ffi::c_void)
+}
+
+#[cfg(windows)]
+fn window_class_name(hwnd: windows::Win32::Foundation::HWND) -> String {
+    use windows::Win32::UI::WindowsAndMessaging::GetClassNameW;
+
+    let mut buffer = [0u16; 256];
+    let len = unsafe { GetClassNameW(hwnd, &mut buffer) };
+    if len <= 0 {
+        return String::new();
+    }
+    String::from_utf16_lossy(&buffer[..len as usize])
+}
+
+#[cfg(windows)]
+fn is_desktop_class(class_name: &str) -> bool {
+    matches!(
+        class_name,
+        "Progman" | "WorkerW" | "SHELLDLL_DefView" | "SysListView32"
+    )
+}
+
+/// True when the point at the center of our window is covered by the desktop
+/// instead of an application (i.e. "Show Desktop" is active).
+#[cfg(windows)]
+fn desktop_covers_window(raw_hwnd: usize) -> bool {
+    use windows::Win32::Foundation::POINT;
+    use windows::Win32::UI::WindowsAndMessaging::{
+        GetAncestor, GetWindowRect, GetWindowThreadProcessId, WindowFromPoint, GA_ROOT,
+    };
+
+    unsafe {
+        let hwnd = hwnd_from_raw(raw_hwnd);
+        let mut rect = windows::Win32::Foundation::RECT::default();
+        if GetWindowRect(hwnd, &mut rect).is_err() {
+            return false;
+        }
+
+        let point = POINT {
+            x: (rect.left + rect.right) / 2,
+            y: (rect.top + rect.bottom) / 2,
+        };
+        let under = WindowFromPoint(point);
+        if under.0.is_null() {
+            return false;
+        }
+
+        let root = GetAncestor(under, GA_ROOT);
+        let root = if root.0.is_null() { under } else { root };
+
+        let mut pid = 0u32;
+        GetWindowThreadProcessId(root, Some(&mut pid));
+        if pid == std::process::id() {
+            return false;
+        }
+
+        is_desktop_class(&window_class_name(root))
+    }
+}
+
+/// True when the foreground window belongs to another process and is not the
+/// desktop (used to detect that "Show Desktop" has ended).
+#[cfg(windows)]
+fn foreground_is_foreign_non_desktop() -> bool {
+    use windows::Win32::UI::WindowsAndMessaging::{
+        GetAncestor, GetForegroundWindow, GetWindowThreadProcessId, GA_ROOT,
+    };
+
+    unsafe {
+        let foreground = GetForegroundWindow();
+        if foreground.0.is_null() {
+            return false;
+        }
+
+        let mut pid = 0u32;
+        GetWindowThreadProcessId(foreground, Some(&mut pid));
+        if pid == std::process::id() {
+            return false;
+        }
+
+        let root = GetAncestor(foreground, GA_ROOT);
+        let root = if root.0.is_null() { foreground } else { root };
+        !is_desktop_class(&window_class_name(root))
+    }
+}
+
+#[cfg(windows)]
+fn set_window_topmost(raw_hwnd: usize, topmost: bool) {
+    use windows::Win32::UI::WindowsAndMessaging::{
+        SetWindowPos, HWND_BOTTOM, HWND_TOPMOST, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOOWNERZORDER,
+        SWP_NOSIZE,
+    };
+
+    let insert_after = if topmost { HWND_TOPMOST } else { HWND_BOTTOM };
+    let _ = unsafe {
+        SetWindowPos(
+            hwnd_from_raw(raw_hwnd),
+            insert_after,
+            0,
+            0,
+            0,
+            0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER,
+        )
+    };
+}
+
+/// Push the widget to the bottom of the normal window z-order so it behaves
+/// like a desktop widget instead of floating over other applications.
+#[cfg(windows)]
+pub(crate) fn send_to_desktop(hwnd_raw: *mut std::ffi::c_void) {
+    use windows::Win32::Foundation::HWND;
+    use windows::Win32::UI::WindowsAndMessaging::{
+        SetWindowPos, HWND_BOTTOM, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOOWNERZORDER, SWP_NOSIZE,
+    };
+
+    let result = unsafe {
+        SetWindowPos(
+            HWND(hwnd_raw),
+            HWND_BOTTOM,
+            0,
+            0,
+            0,
+            0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER,
+        )
+    };
+
+    if let Err(err) = result {
+        warn!("Failed to pin window to the desktop: {}", err);
+    }
+}
+
+#[cfg(windows)]
+pub(crate) fn apply_manual_desktop_pin(hwnd_raw: *mut std::ffi::c_void) {
+    if DESKTOP_SHOWN.load(Ordering::Relaxed) {
+        set_window_topmost(hwnd_raw as usize, true);
+    } else {
+        send_to_desktop(hwnd_raw);
+    }
+}
+
+#[cfg(windows)]
+fn pin_window_to_desktop(window: &tauri::WebviewWindow) {
+    if let Ok(hwnd) = window.hwnd() {
+        send_to_desktop(hwnd.0);
+    }
+}
+
+#[cfg(windows)]
+fn apply_desktop_pinning(app: &tauri::AppHandle, window: &tauri::WebviewWindow) {
+    let always_on_top = app
+        .state::<AppState>()
+        .settings
+        .lock()
+        .map(|s| s.always_on_top)
+        .unwrap_or(false);
+
+    if always_on_top {
+        let _ = window.set_always_on_top(true);
+    } else if DESKTOP_SHOWN.load(Ordering::Relaxed) {
+        // Stay above the desktop while "Show Desktop" is active.
+        if let Ok(hwnd) = window.hwnd() {
+            set_window_topmost(hwnd.0 as usize, true);
+        }
+    } else {
+        let _ = window.set_always_on_top(false);
+        pin_window_to_desktop(window);
+    }
 }
 
 fn validate_window_bounds(window: &tauri::WebviewWindow) {

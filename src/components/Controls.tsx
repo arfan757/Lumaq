@@ -10,7 +10,7 @@ interface ControlsProps {
   onCycleRepeat: () => void;
 }
 
-export const Controls: React.FC<ControlsProps> = ({
+const ControlsComponent: React.FC<ControlsProps> = ({
   playback,
   onPlayPause,
   onNext,
@@ -23,7 +23,11 @@ export const Controls: React.FC<ControlsProps> = ({
   const repeatActive = playback.repeat === "track" || playback.repeat === "list";
 
   return (
-    <div className="controls-row" data-tauri-drag-region="false">
+    <div
+      className="controls-row"
+      data-tauri-drag-region="false"
+      onMouseDown={(e) => e.stopPropagation()}
+    >
       {/* Shuffle */}
       <button
         type="button"
@@ -122,3 +126,5 @@ export const Controls: React.FC<ControlsProps> = ({
     </div>
   );
 };
+
+export const Controls = React.memo(ControlsComponent);

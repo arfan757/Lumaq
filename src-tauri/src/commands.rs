@@ -99,8 +99,15 @@ pub async fn set_settings(
         let _ = guard.save(&state.settings_path);
     }
 
-    // Apply always_on_top
+    // Apply always_on_top. When disabled, keep the widget pinned to the
+    // desktop instead of letting it float over other applications.
     let _ = window.set_always_on_top(validated.always_on_top);
+    #[cfg(windows)]
+    if !validated.always_on_top {
+        if let Ok(hwnd) = window.hwnd() {
+            crate::apply_manual_desktop_pin(hwnd.0);
+        }
+    }
 
     // Apply click_through
     let _ = window.set_ignore_cursor_events(validated.click_through);

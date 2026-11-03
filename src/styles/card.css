@@ -28,7 +28,7 @@
   display: flex;
   gap: 14px;
   align-items: center;
-  height: var(--art-size);
+  min-height: var(--art-size);
 }
 
 /* Artwork */
@@ -75,7 +75,7 @@
 .lyrics-container {
   flex: 1;
   min-width: 0;
-  height: 100%;
+  min-height: var(--art-size);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -84,18 +84,27 @@
   text-align: left;
 }
 
+.lyric-line-current,
+.lyric-line-next {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--lyrics-line-clamp);
+  overflow: hidden;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-overflow: ellipsis;
+  transition: opacity var(--duration-transition) var(--ease-spring);
+}
+
 .lyric-line-current {
   font-size: 14.5px;
   line-height: 1.35;
   font-style: italic;
   font-weight: 500;
   color: var(--color-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   opacity: 1;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  transition: opacity var(--duration-transition) var(--ease-spring);
 }
 
 .lyric-line-next {
@@ -105,12 +114,25 @@
   font-weight: 400;
   color: var(--color-text-dimmed);
   margin-top: 5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   opacity: 0.65;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-  transition: opacity var(--duration-transition) var(--ease-spring);
+}
+
+/* Adaptive sizing so long lines still fit fully inside the card */
+.lyric-line-current.lyric-line--compact {
+  font-size: 13px;
+}
+
+.lyric-line-current.lyric-line--dense {
+  font-size: 11.5px;
+}
+
+.lyric-line-next.lyric-line--compact {
+  font-size: 11.5px;
+}
+
+.lyric-line-next.lyric-line--dense {
+  font-size: 10.5px;
 }
 
 /* Special State Messages */
@@ -121,11 +143,16 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .lyrics-subtext {
   font-size: 11.5px;
   color: var(--color-text-dimmed);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Shimmer animation for loading state */
@@ -145,6 +172,24 @@
   flex-direction: column;
   gap: 5px;
   margin: 8px 0 4px 0;
+  cursor: default;
+}
+
+/* Large invisible hit target so grabbing the thin bar is reliable. */
+.progress-hit-area {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 18px;
+  cursor: pointer;
+  touch-action: none;
+  outline: none;
+  user-select: none;
+}
+
+.progress-hit-area:focus-visible .progress-bar-track {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.45);
 }
 
 .progress-bar-track {
@@ -153,12 +198,13 @@
   height: 3px;
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.14);
-  cursor: pointer;
+  pointer-events: none;
   overflow: visible;
-  transition: height 150ms ease;
+  transition: height 150ms ease, box-shadow 150ms ease;
 }
 
-.progress-bar-track:hover {
+.progress-hit-area:hover .progress-bar-track,
+.progress-hit-area.dragging .progress-bar-track {
   height: 5px;
 }
 
@@ -188,7 +234,8 @@
   transition: transform 150ms ease, box-shadow 150ms ease;
 }
 
-.progress-bar-track:hover .progress-bar-thumb {
+.progress-hit-area:hover .progress-bar-thumb,
+.progress-hit-area.dragging .progress-bar-thumb {
   transform: translate(-50%, -50%) scale(1.25);
   box-shadow:
     0 0 12px rgba(255, 255, 255, 1),

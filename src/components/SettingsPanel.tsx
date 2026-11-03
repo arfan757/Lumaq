@@ -20,6 +20,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     <div
       className="settings-drawer"
       data-tauri-drag-region="false"
+      onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
       <div className="settings-header">

@@ -93,87 +93,113 @@ impl WindowsMediaSource {
 
         let mut preference = "spotify-first".to_string();
         let mut last_stable_key = String::new();
+        let mut pending_key = String::new();
+        let mut pending_since = Instant::now();
         let mut last_resync = Instant::now();
+        let mut last_emitted = PlaybackState::default();
+        let mut last_emitted_position: i64 = -1;
+        let mut pending_seek: Option<(u64, Instant)> = None;
+        let mut thumb_key = String::new();
+        let mut thumb_data: Option<String> = None;
 
         while is_running.load(Ordering::Relaxed) {
-            // 1. Process any pending commands
-            while let Ok(cmd) = cmd_rx.try_recv() {
-                let current_session = Self::find_target_session(&manager, &preference);
-                if let Some(session) = current_session {
-                    match cmd {
-                        MediaCommand::PlayPause => {
-                            let _ = session.TryTogglePlayPauseAsync();
-                        }
-                        MediaCommand::Next => {
-                            let _ = session.TrySkipNextAsync();
-                        }
-                        MediaCommand::Prev => {
-                            let _ = session.TrySkipPreviousAsync();
-                        }
-                        MediaCommand::Seek(ms) => {
-                            let ticks = (ms * 10_000) as i64;
-                            let _ = session.TryChangePlaybackPositionAsync(ticks);
-                        }
-                        MediaCommand::ToggleShuffle => {
-                            let curr_shuffle = pb_cache.lock().unwrap().shuffle.unwrap_or(false);
-                            let _ = session.TryChangeShuffleActiveAsync(!curr_shuffle);
-                        }
-                        MediaCommand::CycleRepeat => {
-                            let curr_repeat =
-                                pb_cache.lock().unwrap().repeat.unwrap_or(RepeatMode::Off);
-                            let next_mode = match curr_repeat {
-                                RepeatMode::Off => MediaPlaybackAutoRepeatMode::List,
-                                RepeatMode::List => MediaPlaybackAutoRepeatMode::Track,
-                                RepeatMode::Track => MediaPlaybackAutoRepeatMode::None,
-                            };
-                            let _ = session.TryChangeAutoRepeatModeAsync(next_mode);
-                        }
-                        MediaCommand::SetPreference(p) => {
-                            preference = p;
+            // 1. Wake up immediately when a command arrives so controls feel instant.
+            let mut mutated = false;
+
+            match cmd_rx.recv_timeout(Duration::from_millis(150)) {
+                Ok(cmd) => {
+                    let (m, hint) =
+                        Self::execute_command(cmd, &manager, &mut preference, &pb_cache);
+                    mutated |= m;
+                    if let Some(ms) = hint {
+                        pending_seek = Some((ms, Instant::now()));
+                    }
+                    while let Ok(cmd) = cmd_rx.try_recv() {
+                        let (m, hint) =
+                            Self::execute_command(cmd, &manager, &mut preference, &pb_cache);
+                        mutated |= m;
+                        if let Some(ms) = hint {
+                            pending_seek = Some((ms, Instant::now()));
                         }
                     }
-                } else if let MediaCommand::SetPreference(p) = cmd {
-                    preference = p;
                 }
+                Err(mpsc::RecvTimeoutError::Timeout) => {}
+                Err(mpsc::RecvTimeoutError::Disconnected) => break,
             }
 
             // 2. Poll active session
             let target_session = Self::find_target_session(&manager, &preference);
 
             if let Some(session) = target_session {
-                if let Ok((now_playing, playback)) = Self::read_session_state(&session) {
-                    if let Some(ref np) = now_playing {
-                        let key = np.track_key.clone();
-                        if key != last_stable_key {
-                            // Debounce track transition
-                            std::thread::sleep(Duration::from_millis(250));
-                            last_stable_key = key.clone();
-                        }
-
-                        let mut curr_np = np_cache.lock().unwrap();
-                        let changed = curr_np.as_ref() != Some(np);
-                        if changed {
-                            *curr_np = Some(np.clone());
-                            let _ = np_tx.send(Some(np.clone()));
+                if let Ok((now_playing, mut playback)) =
+                    Self::read_session_state(&session, &mut thumb_key, &mut thumb_data)
+                {
+                    // Hold the requested position briefly until the player catches up.
+                    if let Some((hint, since)) = pending_seek {
+                        let close = (playback.position_ms as i64 - hint as i64).abs() <= 1500;
+                        if close || since.elapsed() > Duration::from_secs(2) {
+                            pending_seek = None;
+                        } else {
+                            playback.position_ms = hint;
                         }
                     }
 
-                    let mut curr_pb = pb_cache.lock().unwrap();
-                    let status_changed = curr_pb.status != playback.status
-                        || curr_pb.shuffle != playback.shuffle
-                        || curr_pb.repeat != playback.repeat;
+                    if let Some(ref np) = now_playing {
+                        let key = np.track_key.clone();
+                        if key != last_stable_key {
+                            // Non-blocking debounce for transient track metadata.
+                            if pending_key != key {
+                                pending_key = key.clone();
+                                pending_since = Instant::now();
+                            }
+                            if pending_since.elapsed() >= Duration::from_millis(200) {
+                                last_stable_key = key.clone();
+                            }
+                        } else {
+                            pending_key.clear();
+                        }
 
+                        if key == last_stable_key {
+                            let mut curr_np = np_cache.lock().unwrap();
+                            let changed = curr_np.as_ref() != Some(np);
+                            if changed {
+                                *curr_np = Some(np.clone());
+                                let _ = np_tx.send(Some(np.clone()));
+                            }
+                        }
+                    }
+
+                    // Keep the shared cache fresh for command handlers.
+                    {
+                        let mut cached = pb_cache.lock().unwrap();
+                        *cached = playback.clone();
+                    }
+
+                    let status_changed = last_emitted.status != playback.status
+                        || last_emitted.shuffle != playback.shuffle
+                        || last_emitted.repeat != playback.repeat;
+                    let position_delta =
+                        (playback.position_ms as i64 - last_emitted_position).abs();
                     let should_resync = playback.status == PlaybackStatus::Playing
                         && last_resync.elapsed() >= Duration::from_secs(2);
+                    let should_emit =
+                        mutated || status_changed || should_resync || position_delta >= 500;
 
-                    if status_changed || should_resync {
-                        *curr_pb = playback.clone();
-                        let _ = pb_tx.send(playback);
+                    if should_emit {
+                        last_emitted = playback.clone();
+                        last_emitted_position = playback.position_ms as i64;
                         last_resync = Instant::now();
+                        let _ = pb_tx.send(playback);
                     }
                 }
             } else {
                 // No session active
+                pending_key.clear();
+                last_stable_key.clear();
+                pending_seek = None;
+                last_emitted = PlaybackState::default();
+                last_emitted_position = -1;
+
                 let mut curr_np = np_cache.lock().unwrap();
                 if curr_np.is_some() {
                     *curr_np = None;
@@ -185,8 +211,69 @@ impl WindowsMediaSource {
                     let _ = pb_tx.send(PlaybackState::default());
                 }
             }
+        }
+    }
 
-            std::thread::sleep(Duration::from_millis(150));
+    /// Executes a media command immediately and reports whether it mutated
+    /// playback plus an optional seek position hint.
+    fn execute_command(
+        cmd: MediaCommand,
+        manager: &GlobalSystemMediaTransportControlsSessionManager,
+        preference: &mut String,
+        pb_cache: &Arc<Mutex<PlaybackState>>,
+    ) -> (bool, Option<u64>) {
+        match cmd {
+            MediaCommand::SetPreference(p) => {
+                *preference = p;
+                (false, None)
+            }
+            other => {
+                let session = match Self::find_target_session(manager, preference) {
+                    Some(s) => s,
+                    None => return (false, None),
+                };
+
+                let mut seek_hint = None;
+                match other {
+                    MediaCommand::PlayPause => {
+                        let _ = session.TryTogglePlayPauseAsync().and_then(|op| op.get());
+                    }
+                    MediaCommand::Next => {
+                        let _ = session.TrySkipNextAsync().and_then(|op| op.get());
+                    }
+                    MediaCommand::Prev => {
+                        let _ = session.TrySkipPreviousAsync().and_then(|op| op.get());
+                    }
+                    MediaCommand::Seek(ms) => {
+                        let ticks = (ms * 10_000) as i64;
+                        let _ = session
+                            .TryChangePlaybackPositionAsync(ticks)
+                            .and_then(|op| op.get());
+                        seek_hint = Some(ms);
+                    }
+                    MediaCommand::ToggleShuffle => {
+                        let curr_shuffle = pb_cache.lock().unwrap().shuffle.unwrap_or(false);
+                        let _ = session
+                            .TryChangeShuffleActiveAsync(!curr_shuffle)
+                            .and_then(|op| op.get());
+                    }
+                    MediaCommand::CycleRepeat => {
+                        let curr_repeat =
+                            pb_cache.lock().unwrap().repeat.unwrap_or(RepeatMode::Off);
+                        let next_mode = match curr_repeat {
+                            RepeatMode::Off => MediaPlaybackAutoRepeatMode::List,
+                            RepeatMode::List => MediaPlaybackAutoRepeatMode::Track,
+                            RepeatMode::Track => MediaPlaybackAutoRepeatMode::None,
+                        };
+                        let _ = session
+                            .TryChangeAutoRepeatModeAsync(next_mode)
+                            .and_then(|op| op.get());
+                    }
+                    MediaCommand::SetPreference(_) => {}
+                }
+
+                (true, seek_hint)
+            }
         }
     }
 
@@ -226,6 +313,8 @@ impl WindowsMediaSource {
 
     fn read_session_state(
         session: &GlobalSystemMediaTransportControlsSession,
+        thumb_key: &mut String,
+        thumb_data: &mut Option<String>,
     ) -> Result<(Option<NowPlaying>, PlaybackState), String> {
         let source_app = session
             .SourceAppUserModelId()
@@ -358,16 +447,27 @@ impl WindowsMediaSource {
         let is_ad = title.eq_ignore_ascii_case("Advertisement")
             || (artist.eq_ignore_ascii_case("Spotify") && duration_ms > 0 && duration_ms <= 60_000);
 
-        let thumbnail = if let Ok(stream_ref) = media_props.Thumbnail() {
-            Self::read_thumbnail_base64_sync(stream_ref)
-        } else {
-            None
-        };
-
         let track_key = format!(
             "{:x}",
             md5_hash(&format!("{}|{}|{}|{}", title, artist, album, duration_ms))
         );
+
+        // Artwork is expensive to read and base64-encode, so only refresh it
+        // when the track changes.
+        let thumbnail = if *thumb_key == track_key && thumb_data.is_some() {
+            thumb_data.clone()
+        } else {
+            let parsed = if let Ok(stream_ref) = media_props.Thumbnail() {
+                Self::read_thumbnail_base64_sync(stream_ref)
+            } else {
+                None
+            };
+            if parsed.is_some() {
+                *thumb_key = track_key.clone();
+                *thumb_data = parsed.clone();
+            }
+            parsed
+        };
 
         let now_playing = if title.is_empty() && artist.is_empty() {
             None

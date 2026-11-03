@@ -3,11 +3,12 @@
 
   /* Dimensions */
   --card-width: 360px;
-  --card-height: 190px;
+  --card-height: 200px;
   --card-radius: 24px;
   --window-padding: 16px;
   --art-size: 80px;
   --art-radius: 14px;
+  --lyrics-line-clamp: 2;
 
   /* Colors — Clear Liquid Glass (translucent & see-through with physical glass depth) */
   --color-bg-base: linear-gradient(

@@ -33,7 +33,7 @@ impl Default for AppSettings {
         Self {
             scale: 1.0,
             opacity: 1.0,
-            always_on_top: true,
+            always_on_top: false,
             lock_position: false,
             click_through: false,
             autostart: false,
@@ -42,7 +42,7 @@ impl Default for AppSettings {
             lyrics_offset_ms: 0,
             snap_to_edges: true,
             real_blur: false,
-            schema_version: 1,
+            schema_version: 2,
         }
     }
 }
@@ -62,6 +62,12 @@ impl AppSettings {
         match fs::read_to_string(path) {
             Ok(content) => match serde_json::from_str::<AppSettings>(&content) {
                 Ok(mut settings) => {
+                    // v1 defaulted to always-on-top. Widgets live on the desktop
+                    // now, so move existing installs to the new default.
+                    if settings.schema_version < 2 {
+                        settings.always_on_top = false;
+                        settings.schema_version = 2;
+                    }
                     settings.validate_and_clamp();
                     settings
                 }

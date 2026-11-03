@@ -90,7 +90,7 @@ export const Card: React.FC<CardProps> = ({
     <div
       ref={containerRef}
       className="glass-container card-root"
-      data-tauri-drag-region={!settings.lockPosition}
+      data-tauri-drag-region={settings.lockPosition ? "false" : "deep"}
       onContextMenu={handleContextMenu}
       style={{
         transform: `scale(${settings.scale})`,
@@ -99,24 +99,24 @@ export const Card: React.FC<CardProps> = ({
       }}
     >
       {/* Diagonal glass sheen */}
-      <div className="glass-sheen" data-tauri-drag-region={!settings.lockPosition} />
+      <div className="glass-sheen" />
 
       {/* 1px Specular rim light */}
-      <div className="glass-rim" data-tauri-drag-region={!settings.lockPosition} />
+      <div className="glass-rim" />
 
       {/* Top-left corner liquid glare highlight */}
-      <div className="glass-corner-glare" data-tauri-drag-region={!settings.lockPosition} />
+      <div className="glass-corner-glare" />
 
       {/* Inset highlight */}
-      <div className="glass-highlights" data-tauri-drag-region={!settings.lockPosition} />
+      <div className="glass-highlights" />
 
       {/* Bottom specular flare */}
-      <div className="glass-bottom-flare" data-tauri-drag-region={!settings.lockPosition} />
+      <div className="glass-bottom-flare" />
 
       {/* Glass content surface */}
-      <div className="glass-content" data-tauri-drag-region={!settings.lockPosition}>
+      <div className="glass-content">
         {/* Top row: Artwork + Lyrics */}
-        <div className="card-top-row" data-tauri-drag-region={!settings.lockPosition}>
+        <div className="card-top-row">
           <Artwork artwork={nowPlaying?.artwork ?? null} title={nowPlaying?.title} />
           <LyricsView
             lyricsState={lyricsState}

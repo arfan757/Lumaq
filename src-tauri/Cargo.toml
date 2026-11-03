@@ -15,7 +15,7 @@ crate-type = ["staticlib", "rlib"]
 tauri-build = { version = "2.7.4", features = [] }
 
 [dependencies]
-tauri = { version = "2.12.5", features = ["tray-icon"] }
+tauri = { version = "2.12.5", features = ["tray-icon", "image-png"] }
 tauri-plugin-single-instance = "2"
 tauri-plugin-window-state = "2"
 tauri-plugin-store = "2"
@@ -39,4 +39,6 @@ windows = { version = "0.58", features = [
     "Foundation",
     "Foundation_Collections",
     "Storage_Streams",
+    "Win32_Foundation",
+    "Win32_UI_WindowsAndMessaging",
 ] }

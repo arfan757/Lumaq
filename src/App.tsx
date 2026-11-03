@@ -26,7 +26,10 @@ export const App: React.FC = () => {
   );
 
   return (
-    <div className="app-window" data-tauri-drag-region={!settings.lockPosition}>
+    <div
+      className="app-window"
+      data-tauri-drag-region={settings.lockPosition ? "false" : "deep"}
+    >
       <Card
         nowPlaying={nowPlaying}
         playback={playback}
